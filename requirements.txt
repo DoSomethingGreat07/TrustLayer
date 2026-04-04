@@ -1,0 +1,48 @@
+# Core Python utilities
+python-dotenv
+tqdm
+requests
+
+# Data processing
+numpy
+pandas
+scikit-learn
+
+# Jupyter / development
+jupyter
+ipykernel
+
+# PDF loading
+pymupdf
+pypdf
+
+# LangChain ecosystem
+langchain
+langchain-community
+langchain-openai
+langchain-chroma
+langchain-huggingface
+langchain-text-splitters
+
+# Vector database
+chromadb
+
+# Embeddings
+sentence-transformers
+
+# Sparse retrieval
+rank-bm25
+
+# Transformers (NLI + other models)
+transformers
+torch
+
+# HuggingFace datasets (optional)
+datasets
+
+# Evaluation utilities
+matplotlib
+seaborn
+
+# ArXiv paper downloader
+arxiv
