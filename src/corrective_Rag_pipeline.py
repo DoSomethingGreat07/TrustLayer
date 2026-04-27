@@ -439,6 +439,68 @@ def evidence_coverage(answer: str, final_docs: List[dict]) -> float:
     return len(answer_words & context_words) / len(answer_words)
 
 
+def verification_decision(params: dict) -> dict:
+    retrieval_conf = params["retrieval_confidence"]
+    reranker_conf = params["reranker_confidence"]
+    evidence_similarity = params["evidence_similarity"]
+    coverage = params["evidence_coverage"]
+    grounding_score = params["grounding_score"]
+    contradiction = params["nli_contradiction_max"]
+    combined = params["combined_confidence"]
+
+    strict_pass = (
+        retrieval_conf >= 0.35 and
+        reranker_conf >= 0.35 and
+        evidence_similarity >= 0.30 and
+        grounding_score >= 0.45 and
+        contradiction < 0.40
+    )
+
+    # NLI models can under-score concise explanatory answers. This fallback still
+    # requires strong retrieval, strong semantic overlap, and no high contradiction.
+    evidence_backed_pass = (
+        retrieval_conf >= 0.70 and
+        reranker_conf >= 0.70 and
+        evidence_similarity >= 0.60 and
+        coverage >= 0.45 and
+        combined >= 0.60 and
+        grounding_score >= 0.20 and
+        contradiction < 0.50
+    )
+
+    failed_checks = []
+    if retrieval_conf < 0.35:
+        failed_checks.append("retrieval_confidence_below_0.35")
+    if reranker_conf < 0.35:
+        failed_checks.append("reranker_confidence_below_0.35")
+    if evidence_similarity < 0.30:
+        failed_checks.append("evidence_similarity_below_0.30")
+    if grounding_score < 0.45:
+        failed_checks.append("grounding_score_below_0.45")
+    if contradiction >= 0.40:
+        failed_checks.append("nli_contradiction_at_or_above_0.40")
+
+    if strict_pass:
+        return {
+            "verified": True,
+            "mode": "strict_nli_pass",
+            "failed_checks": [],
+        }
+
+    if evidence_backed_pass:
+        return {
+            "verified": True,
+            "mode": "evidence_backed_fallback_pass",
+            "failed_checks": failed_checks,
+        }
+
+    return {
+        "verified": False,
+        "mode": "verification_gate_failed",
+        "failed_checks": failed_checks,
+    }
+
+
 def compute_verification_params(answer: str, final_docs: List[dict], retrieval_stats: dict) -> dict:
     """
     Four important parameters:
@@ -467,15 +529,7 @@ def compute_verification_params(answer: str, final_docs: List[dict], retrieval_s
         0.20 * grounding_score
     )
 
-    verified = (
-        retrieval_conf >= 0.35 and
-        reranker_conf >= 0.35 and
-        evidence_similarity >= 0.30 and
-        grounding_score >= 0.45 and
-        nli_stats["contradiction_max"] < 0.40
-    )
-
-    return {
+    params = {
         "retrieval_confidence": retrieval_conf,
         "reranker_confidence": reranker_conf,
         "evidence_coverage": coverage,
@@ -485,10 +539,14 @@ def compute_verification_params(answer: str, final_docs: List[dict], retrieval_s
         "nli_avg_top3_entailment": nli_stats["avg_top3_entailment"],
         "nli_contradiction_max": nli_stats["contradiction_max"],
         "combined_confidence": combined_confidence,
-        "verified": verified,
         "similarity_debug": sim_stats,
         "nli_debug": nli_stats,
     }
+    decision = verification_decision(params)
+    params["verified"] = decision["verified"]
+    params["verification_mode"] = decision["mode"]
+    params["failed_checks"] = decision["failed_checks"]
+    return params
 
 
 # ============================================================
@@ -597,13 +655,14 @@ def corrective_generation_loop(
         )
 
     abstained = False
-    if (
-        not verification_params["verified"] or
-        verification_params["combined_confidence"] < 0.40 or
-        verification_params["grounding_score"] < 0.45
-    ):
+    if not verification_params["verified"] or verification_params["combined_confidence"] < 0.40:
         answer = "Insufficient evidence"
-        justification = "The answer could not be sufficiently verified against the retrieved evidence."
+        failed_checks = verification_params.get("failed_checks", [])
+        if failed_checks:
+            reason = ", ".join(failed_checks)
+            justification = f"The answer could not be sufficiently verified against the retrieved evidence: {reason}."
+        else:
+            justification = "The answer could not be sufficiently verified against the retrieved evidence."
         abstained = True
 
     return {
@@ -614,7 +673,7 @@ def corrective_generation_loop(
         "retrieval_confidence": retrieval_stats["confidence"],
         "verification": {
             "verified": verification_params["verified"],
-            "reason": "verification_gate_passed" if verification_params["verified"] else "verification_gate_failed",
+            "reason": verification_params.get("verification_mode", "verification_gate_failed"),
         },
         "verification_params": verification_params,
         "final_docs": final_docs,

@@ -1,430 +1,502 @@
 # TrustLayer
 
-TrustLayer is a trust-aware research assistant for a local research-paper corpus. It combines:
-
-- PDF ingestion
-- metadata enrichment
-- chunking
-- vector retrieval
-- BM25 sparse retrieval
-- cross-encoder reranking
-- corrective retrieval
-- grounded answer generation
-- verification-based abstention
-- an interactive Streamlit interface
-
-The goal is not just to answer questions, but to answer them with visible evidence and a clear trust signal.
-
-## What This Project Does
-
-At a high level, TrustLayer lets you ask questions about a set of research papers stored locally in `data/`. The app:
-
-1. loads PDF pages into documents
-2. enriches metadata where possible
-3. splits documents into chunks
-4. indexes those chunks in Chroma
-5. builds a BM25 sparse retriever
-6. retrieves candidates using dense + sparse retrieval
-7. fuses and reranks those candidates
-8. generates an answer strictly from retrieved evidence
-9. verifies whether the answer is sufficiently supported
-10. either returns the answer or abstains with `Insufficient evidence`
-
-This means the system is designed to prefer caution over unsupported confidence.
-
-## End-to-End Pipeline
-
-### 1. Data Ingestion
-
-Source files live under `data/`, organized by topic:
-
-- `data/llm`
-- `data/nlp`
-- `data/rag`
-- `data/transformers`
-
-Each PDF is loaded page by page using `PyMuPDFLoader` in [loader.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/loader.py).
-
-Important behavior:
-
-- every PDF page becomes a LangChain `Document`
-- metadata is derived from filename and page information
-- optional Semantic Scholar enrichment can improve title/author metadata
-- loaded pages are cached in `artifacts/loaded_pages.pkl`
-- the manifest of PDFs is cached in `artifacts/manifest.json`
-
-This cache avoids rebuilding the document list every time the app starts.
-
-### 2. Metadata Enrichment
-
-TrustLayer can enrich paper metadata with:
-
-- filename fallback
-- first-page title/author heuristics
-- Semantic Scholar lookups
-
-This logic lives in [loader.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/loader.py).
-
-If API enrichment is enabled, the loader tries to resolve better paper metadata and caches it in:
-
-- `artifacts/paper_metadata_cache.json`
-
-### 3. Chunking
-
-Documents are split into retrieval chunks in [chunking.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/chunking.py).
-
-Default chunk parameters:
-
-- `chunk_size = 800`
-- `chunk_overlap = 150`
-
-Each chunk gets a stable metadata identity, including:
-
-- `doc_id`
-- `page_id`
-- `chunk_index`
-- `chunk_id`
-
-Chunks are cached to:
-
-- `artifacts/chunks.pkl`
-- `artifacts/chunk_config.pkl`
-
-### 4. Embeddings and Vector Store
-
-Embeddings are built via Hugging Face sentence-transformer embeddings in [embeddings.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/embeddings.py).
-
-The vector database is managed in [vector_db.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/vector_db.py) using Chroma.
-
-Behavior:
-
-- if no vector DB exists, TrustLayer builds it from chunks
-- if the embedding model or device changes, TrustLayer rebuilds it
-- otherwise it reuses the cached database
-
-Artifacts:
-
-- `artifacts/chroma_papers/`
-- `artifacts/vectordb_config.json`
-
-### 5. Sparse Retrieval
-
-TrustLayer also builds a BM25 index over chunk text in [main.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/main.py).
-
-This gives a lexical retrieval signal that complements vector similarity.
-
-### 6. Hybrid Retrieval + Reranking
-
-Core retrieval logic lives in [corrective_Rag_pipeline.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/corrective_Rag_pipeline.py).
-
-The retrieval flow is:
-
-1. dense retrieval from Chroma
-2. sparse retrieval from BM25
-3. reciprocal rank fusion (RRF)
-4. cross-encoder reranking
-
-The reranker uses:
-
-- `cross-encoder/ms-marco-MiniLM-L-6-v2`
-
-This stage produces a small set of high-priority evidence chunks.
-
-### 7. Corrective Retrieval
-
-If initial retrieval confidence is low, the pipeline does not immediately trust the first retrieval result.
-
-Instead, it performs a corrective step:
-
-- computes retrieval confidence
-- expands the query when appropriate
-- re-retrieves candidates
-- merges candidates
-- reranks again
-
-This is how the project tries to recover from weak first-pass retrieval.
-
-### 8. Grounded Answer Generation
-
-Answer generation lives in [llm_generate.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/llm_generate.py).
-
-The model is prompted to:
-
-- use only provided evidence
-- avoid outside knowledge
-- say `Insufficient evidence` if support is weak
-- produce both an answer and justification
-
-The prompt context is built from top retrieved evidence chunks and includes:
-
-- title
-- authors
-- file
-- page
-- chunk ID
-- chunk content
-
-### 9. Verification and Abstention
-
-TrustLayer does not blindly trust the first generated answer.
-
-It verifies the answer using:
-
-- retrieval confidence
-- reranker confidence
-- evidence similarity
-- evidence coverage
-- NLI entailment
-- contradiction checks
-- combined confidence thresholds
-
-If the answer fails verification, the system abstains and returns:
-
-- `Insufficient evidence`
-
-This logic is also handled in [corrective_Rag_pipeline.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/corrective_Rag_pipeline.py).
-
-### 10. Streamlit Interface
-
-The user-facing application is [app.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/app.py).
-
-The UI provides:
-
-- login gate
-- corpus overview
-- query input
-- answer + justification
-- pipeline summary
-- verification metrics
-- evidence cards
-- generator context viewer
-- manual precision/recall evaluation
-- user-specific chat history
-
-## Main Files and Their Roles
-
-### Application and Pipeline
-
-- [app.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/app.py): Streamlit app and UI
-- [main.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/main.py): assembles the retrieval pipeline
-- [corrective_Rag_pipeline.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/corrective_Rag_pipeline.py): retrieval, correction, verification, abstention
-- [llm_generate.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/llm_generate.py): OpenAI-backed answer generation
-
-### Data Preparation
-
-- [loader.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/loader.py): PDF loading and metadata enrichment
-- [chunking.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/chunking.py): chunk creation and chunk caching
-- [embeddings.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/embeddings.py): embedding wrapper
-- [vector_db.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/vector_db.py): Chroma persistence and loading
-
-### Evaluation / Dataset Generation
-
-- [evaluate_retrieval_metrics.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/evaluate_retrieval_metrics.py)
-- [generate_questions.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/generate_questions.py)
-- [100_questions.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/100_questions.py)
-- [knowledge_base_creation.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/knowledge_base_creation.py)
-- [verification.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/verification.py)
-
-## Repository Layout
+TrustLayer is a trust-aware research assistant for a local research-paper corpus. It combines local PDF ingestion, hybrid retrieval, cross-encoder reranking, corrective retrieval, grounded OpenAI answer generation, and verification-based abstention.
+
+The goal is not only to answer a question, but to show why the answer should be trusted, what evidence was used, and when the system should say `Insufficient evidence`.
+
+![TrustLayer pipeline diagram](assets/trustlayer-pipeline-offline-online.png)
+
+## Highlights
+
+- Local PDF corpus support under `data/`
+- Page-level PDF loading with metadata enrichment
+- Chunking with reusable local artifacts
+- Dense retrieval with Chroma and Hugging Face embeddings
+- Sparse retrieval with BM25
+- Reciprocal rank fusion for dense + sparse candidates
+- Cross-encoder reranking with `cross-encoder/ms-marco-MiniLM-L-6-v2`
+- Corrective retrieval with query expansion and retries
+- Grounded OpenAI answer generation
+- Verification using retrieval confidence, evidence similarity, evidence coverage, NLI entailment, contradiction checks, and combined confidence
+- Abstention when evidence is weak
+- Streamlit UI
+- React + TypeScript UI with a lightweight agentic retrieval router
+- Local answer cache for repeated React queries
+
+## How It Works
+
+```text
+Local PDFs
+   |
+   v
+loader.py
+   - load pages with PyMuPDF
+   - enrich metadata
+   - cache loaded pages and manifest
+   |
+   v
+chunking.py
+   - split pages into stable chunks
+   - cache chunks
+   |
+   v
+vector_db.py + main.py
+   - build/load Chroma vector DB
+   - build BM25 index in memory
+   - load cross-encoder reranker
+   |
+   v
+corrective_Rag_pipeline.py
+   - dense retrieval
+   - BM25 retrieval
+   - reciprocal rank fusion
+   - cross-encoder reranking
+   - corrective retry if needed
+   |
+   v
+llm_generate.py
+   - generate an answer using only retrieved evidence
+   |
+   v
+verification
+   - verify support
+   - return answer or abstain
+```
+
+## Interfaces
+
+TrustLayer has two UI options.
+
+### Streamlit UI
+
+The original app lives in [src/app.py](src/app.py). It uses the core pipeline directly.
+
+```text
+src/app.py
+  -> src/main.py
+  -> src/corrective_Rag_pipeline.py
+```
+
+### React UI
+
+The React app lives in [frontend/](frontend/). It talks to a FastAPI bridge in [src/react_api.py](src/react_api.py).
+
+```text
+frontend React app
+  -> FastAPI bridge: src/react_api.py
+  -> agentic router: src/light_agentic_pipeline.py
+  -> core RAG: src/corrective_Rag_pipeline.py
+```
+
+The React path adds a small agentic router. It does not use a heavy multi-agent framework. It only classifies the question shape and selects retrieval settings before calling the existing corrective RAG pipeline.
+
+Example strategies:
+
+- `balanced_hybrid`
+- `definition_broad_context`
+- `comparison_more_evidence`
+- `citation_precision`
+- `mechanism_explanation`
+
+## Repository Structure
 
 ```text
 TrustLayer/
-├── data/                   # local paper corpus
-├── src/                    # application and pipeline code
-├── .streamlit/             # Streamlit config
-├── requirements.txt        # Python dependencies
-├── .env.example            # environment variable template
-└── README.md               # project documentation
+├── assets/
+│   └── trustlayer-pipeline-offline-online.png
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+├── src/
+│   ├── app.py
+│   ├── main.py
+│   ├── react_api.py
+│   ├── light_agentic_pipeline.py
+│   ├── corrective_Rag_pipeline.py
+│   ├── llm_generate.py
+│   ├── loader.py
+│   ├── chunking.py
+│   ├── embeddings.py
+│   ├── vector_db.py
+│   └── knowledge_base_creation.py
+├── .streamlit/
+├── .github/workflows/
+├── .env.example
+├── requirements.txt
+├── GITHUB_DEPLOYMENT.md
+└── README.md
 ```
 
-Generated local outputs are written to `artifacts/` and are intentionally ignored in Git.
+Local-only folders are ignored:
 
-## Setup
+```text
+data/
+artifacts/
+trustlayer_env/
+.venv/
+frontend/node_modules/
+frontend/dist/
+```
 
-### 1. Create a Virtual Environment
+## Requirements
+
+- Python 3.11 recommended
+- Node.js 20+ or 22+
+- An OpenAI API key
+- A local PDF corpus under `data/`
+
+The first run may download Hugging Face model weights for embeddings, reranking, and verification.
+
+## Setup From Scratch
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd TrustLayer
+```
+
+### 2. Create a Python Virtual Environment
 
 ```bash
 python3 -m venv trustlayer_env
 source trustlayer_env/bin/activate
 ```
 
-### 2. Install Dependencies
+On Windows:
+
+```bash
+trustlayer_env\Scripts\activate
+```
+
+### 3. Install Python Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
-Copy `.env.example` to `.env`:
+Copy the template:
 
 ```bash
 cp .env.example .env
 ```
 
-Then fill in:
+Fill in:
 
-- `OPENAI_API_KEY`
-- `TRUSTLAYER_APP_USERNAME`
-- `TRUSTLAYER_APP_PASSWORD`
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+TRUSTLAYER_APP_USERNAME=admin
+TRUSTLAYER_APP_PASSWORD=change_me
+```
 
-### 4. Confirm Your Local Corpus Exists
+Never commit `.env`.
 
-The app expects PDFs inside the `data/` directory.
+### 5. Add a Paper Corpus
 
-If you clone this repo without the original paper corpus, the app may still start but retrieval will not be useful until you add PDFs.
+The app expects PDFs under `data/`, grouped by domain.
 
-## Running the App
+Example:
+
+```text
+data/
+├── llm/
+│   └── some_paper.pdf
+├── nlp/
+│   └── some_paper.pdf
+├── rag/
+│   └── some_paper.pdf
+└── transformers/
+    └── some_paper.pdf
+```
+
+You can also use the helper script to download a starter corpus from arXiv:
+
+```bash
+python src/knowledge_base_creation.py
+```
+
+That script is for offline corpus creation. The live RAG app uses [src/loader.py](src/loader.py) to read PDFs from `data/`.
+
+## Run the Streamlit App
 
 ```bash
 source trustlayer_env/bin/activate
 streamlit run src/app.py
 ```
 
-## First Run Expectations
+Then open the URL printed by Streamlit, usually:
 
-On the first real run, TrustLayer may take time to:
+```text
+http://localhost:8501
+```
 
-- load PDFs
-- build document caches
-- create chunks
-- build the Chroma vector DB
-- download local ML model weights if not already cached
+## Run the React App
 
-Subsequent runs should be much faster because caches and vector DB artifacts are reused.
+Use two terminals.
 
-## How Caching Works
-
-TrustLayer caches several expensive steps locally:
-
-- loaded pages
-- file manifest
-- metadata cache
-- chunks
-- chunk configuration
-- Chroma vector store
-- vector DB configuration
-
-If you change:
-
-- the paper corpus
-- chunk size / overlap
-- embedding model
-- device
-
-you may need to rebuild relevant artifacts.
-
-## Common Local Commands
-
-### Run the Streamlit App
+### Terminal 1: FastAPI Backend
 
 ```bash
+cd TrustLayer
+source trustlayer_env/bin/activate
+uvicorn src.react_api:app --host 127.0.0.1 --port 8000
+```
+
+Do not use `--reload` when your virtual environment is inside the project folder. The reloader may watch `trustlayer_env/` and restart while models are loading.
+
+### Terminal 2: React Frontend
+
+```bash
+cd TrustLayer/frontend
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+If the API is hosted somewhere else, create `frontend/.env.local`:
+
+```bash
+VITE_TRUSTLAYER_API_URL=http://127.0.0.1:8000
+```
+
+## First Run Expectations
+
+The first real run can take time because TrustLayer may need to:
+
+- read PDFs
+- create `artifacts/loaded_pages.pkl`
+- create `artifacts/manifest.json`
+- create `artifacts/chunks.pkl`
+- create/load `artifacts/chroma_papers/`
+- build BM25 in memory
+- load the embedding model
+- load the cross-encoder reranker
+- load verification models
+
+Later questions are faster because artifacts are reused from disk and the running backend keeps models in memory.
+
+## Caching
+
+TrustLayer uses local caches in `artifacts/`.
+
+```text
+artifacts/
+├── loaded_pages.pkl
+├── manifest.json
+├── paper_metadata_cache.json
+├── chunks.pkl
+├── chunk_config.pkl
+├── chroma_papers/
+├── vectordb_config.json
+└── react_answer_cache.json
+```
+
+Notes:
+
+- Chunks and vector DB are reused across runs.
+- BM25 is rebuilt in memory from cached chunks each backend start.
+- The React API stores repeated question results in `artifacts/react_answer_cache.json`.
+- If the corpus manifest changes, React answer cache keys change automatically.
+
+## Core Files
+
+| File | Purpose |
+| --- | --- |
+| [src/app.py](src/app.py) | Streamlit UI |
+| [src/react_api.py](src/react_api.py) | FastAPI bridge for React |
+| [src/light_agentic_pipeline.py](src/light_agentic_pipeline.py) | Lightweight retrieval router for React |
+| [src/main.py](src/main.py) | Builds documents, chunks, vector DB, BM25, reranker |
+| [src/corrective_Rag_pipeline.py](src/corrective_Rag_pipeline.py) | Hybrid retrieval, correction, verification, abstention |
+| [src/llm_generate.py](src/llm_generate.py) | OpenAI grounded answer generation |
+| [src/loader.py](src/loader.py) | Runtime PDF loading and metadata enrichment |
+| [src/knowledge_base_creation.py](src/knowledge_base_creation.py) | Optional arXiv corpus downloader |
+| [src/chunking.py](src/chunking.py) | Chunk creation and chunk cache |
+| [src/vector_db.py](src/vector_db.py) | Chroma vector DB management |
+| [src/embeddings.py](src/embeddings.py) | Hugging Face embedding wrapper |
+
+## Retrieval Details
+
+### Dense Retrieval
+
+Dense retrieval uses embeddings and Chroma. It finds semantically similar chunks even when words do not match exactly.
+
+### BM25 Sparse Retrieval
+
+BM25 is keyword-based. It finds chunks with strong lexical overlap with the query.
+
+### Fusion
+
+Dense and BM25 results are merged with reciprocal rank fusion. Chunks found by both methods get a stronger signal.
+
+### Cross-Encoder Reranking
+
+The reranker model is:
+
+```text
+cross-encoder/ms-marco-MiniLM-L-6-v2
+```
+
+It scores each `(query, chunk)` pair and reorders the fused candidates by relevance.
+
+## Verification and Abstention
+
+After generation, TrustLayer checks whether the answer is supported by retrieved evidence.
+
+Signals include:
+
+- retrieval confidence
+- reranker confidence
+- evidence coverage
+- evidence similarity
+- NLI entailment
+- NLI contradiction
+- combined confidence
+
+If support is weak, the system returns:
+
+```text
+Insufficient evidence
+```
+
+This is expected behavior, not necessarily an error.
+
+## React Agentic Router
+
+The React pipeline includes a lightweight routing step in [src/light_agentic_pipeline.py](src/light_agentic_pipeline.py).
+
+It chooses retrieval settings such as:
+
+```text
+Dense K
+BM25 K
+Fusion K
+Final K
+Retries
+```
+
+Example:
+
+```text
+Mechanism question:
+Dense K: 24
+BM25 K: 22
+Fusion K: 60
+Final K: 6
+Retries: 2
+```
+
+The router is intentionally small. It does not replace the core RAG pipeline.
+
+## Common Commands
+
+Compile-check Python:
+
+```bash
+python3 -m py_compile src/*.py
+```
+
+Build React:
+
+```bash
+cd frontend
+npm run build
+```
+
+Run React backend:
+
+```bash
+source trustlayer_env/bin/activate
+uvicorn src.react_api:app --host 127.0.0.1 --port 8000
+```
+
+Run React frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Run Streamlit:
+
+```bash
+source trustlayer_env/bin/activate
 streamlit run src/app.py
 ```
 
-### Compile-Check Python Files
-
-```bash
-python -m py_compile src/app.py
-```
-
-### Rebuild From Scratch
-
-If you want to force regeneration inside code, update the `prepare_pipeline(...)` call in [main.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/main.py) or [app.py](/Users/nikhiljuluri/Desktop/TrustLayer/src/app.py) by toggling:
-
-- `force_rebuild_documents=True`
-- `force_rebuild_chunks=True`
-- `force_rebuild_vectordb=True`
-
 ## Troubleshooting
 
-### The App Always Says `Insufficient evidence`
+### The App Says `Insufficient evidence`
 
-Possible causes:
+Possible reasons:
 
-- retrieval confidence is genuinely low
-- verification thresholds are strict
-- the paper corpus does not contain enough relevant evidence
-- a required model has not been downloaded yet
+- the corpus does not contain enough evidence
+- retrieval confidence is low
+- verification thresholds rejected the answer
+- evidence was related but not directly supportive
 
-Check:
+Check the Evidence, Verification, and Context tabs in the UI.
 
-- the `Verification` tab
-- the `Evidence` tab
-- the `Context Sent to Generator` tab
+### First Question Is Slow
 
-### Imports Show Warnings in VS Code
+This is normal. The backend may be loading models and artifacts into memory. Keep the backend running after the first question.
 
-Make sure VS Code is using:
+### Uvicorn Reload Keeps Restarting
 
-- `trustlayer_env/bin/python`
+Run without `--reload`:
 
-and not the system Python interpreter.
+```bash
+uvicorn src.react_api:app --host 127.0.0.1 --port 8000
+```
 
-### Streamlit Watcher Warnings
+### Hugging Face Model Warnings
 
-This repo includes a local Streamlit config in:
+Some model loading warnings are harmless, especially when loading sentence-transformer or transformer checkpoints with extra keys. If the model finishes loading, the app can continue.
 
-- [.streamlit/config.toml](/Users/nikhiljuluri/Desktop/TrustLayer/.streamlit/config.toml)
+### Missing or Weak Paper Titles
 
-to reduce noisy watcher behavior around large ML libraries.
+Runtime metadata comes from PDF heuristics, optional Semantic Scholar enrichment, and filename fallbacks. The React API also applies display-only cleanup for generic titles like `Preprint` or date strings.
 
-### Hugging Face Models Need Network Access on First Use
+## GitHub Notes
 
-Some retrieval / verification models load lazily. If a model is not already cached locally, the first use may require internet access.
+See [GITHUB_DEPLOYMENT.md](GITHUB_DEPLOYMENT.md) for a publishing checklist.
 
-## GitHub / Repo Hygiene
-
-This repo is prepared so that local-only files are not committed:
+Do not commit:
 
 - `.env`
+- `data/`
+- `artifacts/`
 - virtual environments
-- local caches
-- generated `artifacts/`
+- `frontend/node_modules/`
+- `frontend/dist/`
 
-Important:
-
-- never commit `.env`
-- rotate any credentials that were ever exposed locally before publishing
-
-## Recommended Commit Contents
-
-Safe, normal contents to publish:
+Safe to commit:
 
 - `src/`
-- `data/` if you want to publish the corpus
+- `frontend/`
+- `assets/`
 - `.streamlit/config.toml`
+- `.github/workflows/ci.yml`
 - `requirements.txt`
 - `.env.example`
 - `README.md`
+- `GITHUB_DEPLOYMENT.md`
 
-Usually do not publish:
+## CI
 
-- `artifacts/`
-- `.env`
-- `.venv/`
-- `trustlayer_env/`
+The GitHub Actions workflow in [.github/workflows/ci.yml](.github/workflows/ci.yml) checks:
 
-## If You Want to Extend TrustLayer
+- Python compile validity
+- frontend dependency install
+- React production build
 
-Good next steps:
+## License
 
-- add source filtering by paper or domain
-- add citation export
-- add evaluation dashboards for retrieval quality
-- tune abstention thresholds
-- separate production dependencies from notebook/evaluation dependencies
-- add GitHub Actions for linting and startup checks
-
-## Summary
-
-TrustLayer is a full local RAG stack for research-paper QA with:
-
-- evidence-first retrieval
-- correction when retrieval is weak
-- grounded answer generation
-- explicit verification and abstention
-- an interactive UI for inspecting the full decision path
-
-The project is most useful when you want not only an answer, but a visible reason to trust or distrust that answer.
-
+Add your preferred license before publishing publicly.

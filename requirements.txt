@@ -46,3 +46,7 @@ seaborn
 
 # ArXiv paper downloader
 arxiv
+
+# Optional React frontend API bridge
+fastapi
+uvicorn
