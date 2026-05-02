@@ -322,6 +322,12 @@ Notes:
 
 The evaluation workflow is local-only because generated questions, metrics, and report tables are written under `artifacts/`, which is intentionally not committed.
 
+The latest report-ready metrics are committed under [docs/](docs/):
+
+- [docs/final_report_summary.md](docs/final_report_summary.md)
+- [docs/retrieval_performance_by_k.svg](docs/retrieval_performance_by_k.svg)
+- [docs/embedding_ablation_k10.svg](docs/embedding_ablation_k10.svg)
+
 Latest local evaluation setup:
 
 ```text

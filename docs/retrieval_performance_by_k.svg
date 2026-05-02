@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="460.0" y="34" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle" fill="#17202a">Final Retrieval Performance by K</text>
+<line x1="80" y1="440.0" x2="880" y2="440.0" stroke="#d7dde5" stroke-dasharray="4 4"/>
+<text x="68" y="444.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" text-anchor="end" fill="#17202a">0.0</text>
+<line x1="80" y1="366.0" x2="880" y2="366.0" stroke="#d7dde5" stroke-dasharray="4 4"/>
+<text x="68" y="370.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" text-anchor="end" fill="#17202a">0.1</text>
+<line x1="80" y1="292.0" x2="880" y2="292.0" stroke="#d7dde5" stroke-dasharray="4 4"/>
+<text x="68" y="296.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" text-anchor="end" fill="#17202a">0.2</text>
+<line x1="80" y1="218.0" x2="880" y2="218.0" stroke="#d7dde5" stroke-dasharray="4 4"/>
+<text x="68" y="222.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" text-anchor="end" fill="#17202a">0.3</text>
+<line x1="80" y1="144.0" x2="880" y2="144.0" stroke="#d7dde5" stroke-dasharray="4 4"/>
+<text x="68" y="148.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" text-anchor="end" fill="#17202a">0.4</text>
+<line x1="80" y1="70.0" x2="880" y2="70.0" stroke="#d7dde5" stroke-dasharray="4 4"/>
+<text x="68" y="74.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" text-anchor="end" fill="#17202a">0.5</text>
+<line x1="80" y1="70" x2="80" y2="440" stroke="#17202a"/>
+<line x1="80" y1="440" x2="880" y2="440" stroke="#17202a"/>
+<line x1="80.0" y1="440" x2="80.0" y2="446" stroke="#17202a"/>
+<text x="80.0" y="466" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#17202a">1</text>
+<line x1="346.6666666666667" y1="440" x2="346.6666666666667" y2="446" stroke="#17202a"/>
+<text x="346.6666666666667" y="466" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#17202a">3</text>
+<line x1="613.3333333333334" y1="440" x2="613.3333333333334" y2="446" stroke="#17202a"/>
+<text x="613.3333333333334" y="466" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#17202a">5</text>
+<line x1="880.0" y1="440" x2="880.0" y2="446" stroke="#17202a"/>
+<text x="880.0" y="466" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#17202a">10</text>
+<polyline points="80.0,339.1 346.7,266.2 613.3,243.8 880.0,215.8" fill="none" stroke="#2563eb" stroke-width="3"/>
+<circle cx="80.0" cy="339.1" r="4" fill="#2563eb"/>
+<circle cx="346.7" cy="266.2" r="4" fill="#2563eb"/>
+<circle cx="613.3" cy="243.8" r="4" fill="#2563eb"/>
+<circle cx="880.0" cy="215.8" r="4" fill="#2563eb"/>
+<polyline points="80.0,344.7 346.7,274.6 613.3,249.4 880.0,221.3" fill="none" stroke="#16a34a" stroke-width="3"/>
+<circle cx="80.0" cy="344.7" r="4" fill="#16a34a"/>
+<circle cx="346.7" cy="274.6" r="4" fill="#16a34a"/>
+<circle cx="613.3" cy="249.4" r="4" fill="#16a34a"/>
+<circle cx="880.0" cy="221.3" r="4" fill="#16a34a"/>
+<polyline points="80.0,339.1 346.7,310.1 613.3,304.8 880.0,301.3" fill="none" stroke="#9333ea" stroke-width="3"/>
+<circle cx="80.0" cy="339.1" r="4" fill="#9333ea"/>
+<circle cx="346.7" cy="310.1" r="4" fill="#9333ea"/>
+<circle cx="613.3" cy="304.8" r="4" fill="#9333ea"/>
+<circle cx="880.0" cy="301.3" r="4" fill="#9333ea"/>
+<polyline points="80.0,339.1 346.7,304.7 613.3,293.4 880.0,284.2" fill="none" stroke="#ea580c" stroke-width="3"/>
+<circle cx="80.0" cy="339.1" r="4" fill="#ea580c"/>
+<circle cx="346.7" cy="304.7" r="4" fill="#ea580c"/>
+<circle cx="613.3" cy="293.4" r="4" fill="#ea580c"/>
+<circle cx="880.0" cy="284.2" r="4" fill="#ea580c"/>
+<polyline points="80.0,182.1 346.7,142.9 613.3,137.3 880.0,120.5" fill="none" stroke="#0f766e" stroke-width="3"/>
+<circle cx="80.0" cy="182.1" r="4" fill="#0f766e"/>
+<circle cx="346.7" cy="142.9" r="4" fill="#0f766e"/>
+<circle cx="613.3" cy="137.3" r="4" fill="#0f766e"/>
+<circle cx="880.0" cy="120.5" r="4" fill="#0f766e"/>
+<rect x="100" y="75" width="14" height="14" fill="#2563eb"/>
+<text x="122" y="87" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#17202a">HitRate</text>
+<rect x="100" y="99" width="14" height="14" fill="#16a34a"/>
+<text x="122" y="111" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#17202a">Recall</text>
+<rect x="100" y="123" width="14" height="14" fill="#9333ea"/>
+<text x="122" y="135" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#17202a">MRR</text>
+<rect x="100" y="147" width="14" height="14" fill="#ea580c"/>
+<text x="122" y="159" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#17202a">nDCG</text>
+<rect x="100" y="171" width="14" height="14" fill="#0f766e"/>
+<text x="122" y="183" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#17202a">PaperHit</text>
+<text x="460.0" y="496" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" text-anchor="middle" fill="#17202a">Top-K Retrieved Chunks</text>
+<text x="22" y="260.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" text-anchor="middle" fill="#17202a">Score</text>
+</svg>
