@@ -125,8 +125,8 @@ if __name__ == "__main__":
     chunks = get_or_build_chunks(
         documents=documents,
         force_rebuild=False,
-        chunk_size=800,
-        chunk_overlap=150,
+        chunk_size=1200,
+        chunk_overlap=250,
     )
 
     debug_chunk_samples(chunks, n=2)

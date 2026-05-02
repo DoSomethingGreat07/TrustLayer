@@ -87,8 +87,8 @@ def _get_pipeline(use_api_enrichment: bool, device: str) -> dict[str, Any]:
         force_rebuild_chunks=False,
         force_rebuild_vectordb=False,
         use_api_enrichment=use_api_enrichment,
-        chunk_size=800,
-        chunk_overlap=150,
+        chunk_size=1200,
+        chunk_overlap=250,
         embedding_model="sentence-transformers/all-mpnet-base-v2",
         device=device,
     )

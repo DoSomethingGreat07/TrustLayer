@@ -1,5 +1,6 @@
 import argparse
 import csv
+import math
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean
@@ -7,6 +8,18 @@ from statistics import mean
 
 DEFAULT_QUESTIONS_CSV = Path("artifacts/generated_questions.csv")
 DEFAULT_OUTPUT_CSV = Path("artifacts/retrieval_metrics_per_query.csv")
+
+VERIFICATION_FIELDS = [
+    "retrieval_confidence",
+    "reranker_confidence",
+    "evidence_similarity",
+    "grounding_score",
+    "evidence_coverage",
+    "combined_confidence",
+    "nli_max_entailment",
+    "nli_avg_top3_entailment",
+    "nli_contradiction_max",
+]
 
 
 def parse_chunk_ids(raw_value: str) -> set[str]:
@@ -30,7 +43,14 @@ def load_question_rows(csv_path: Path) -> list[dict]:
         return list(reader)
 
 
-def get_top_chunk_ids(query: str, pipeline: dict, dense_k: int, sparse_k: int, fusion_k: int, final_k: int) -> list[str]:
+def get_top_retrieved_metadata(
+    query: str,
+    pipeline: dict,
+    dense_k: int,
+    sparse_k: int,
+    fusion_k: int,
+    final_k: int,
+) -> list[dict]:
     from corrective_Rag_pipeline import (
         dense_retrieve,
         sparse_retrieve,
@@ -47,7 +67,13 @@ def get_top_chunk_ids(query: str, pipeline: dict, dense_k: int, sparse_k: int, f
         fused_docs,
         top_k=final_k,
     )
-    return [str(item["doc"].metadata.get("chunk_id", "")).strip() for item in reranked_docs]
+    return [
+        {
+            "chunk_id": str(item["doc"].metadata.get("chunk_id", "")).strip(),
+            "doc_id": str(item["doc"].metadata.get("doc_id", "")).strip(),
+        }
+        for item in reranked_docs
+    ]
 
 
 def compute_metrics_at_k(retrieved_ids: list[str], relevant_ids: set[str], k: int) -> dict:
@@ -59,16 +85,94 @@ def compute_metrics_at_k(retrieved_ids: list[str], relevant_ids: set[str], k: in
             "recall": 0.0,
             "hit": 0,
             "relevant_retrieved": 0,
+            "mrr": 0.0,
+            "ndcg": 0.0,
         }
 
     relevant_retrieved = sum(1 for chunk_id in top_k_ids if chunk_id in relevant_ids)
+    reciprocal_rank = 0.0
+    dcg = 0.0
+
+    for rank, chunk_id in enumerate(top_k_ids, start=1):
+        if chunk_id in relevant_ids:
+            if reciprocal_rank == 0.0:
+                reciprocal_rank = 1.0 / rank
+            dcg += 1.0 / math.log2(rank + 1)
+
+    ideal_relevant = min(len(relevant_ids), k)
+    ideal_dcg = sum(1.0 / math.log2(rank + 1) for rank in range(1, ideal_relevant + 1))
 
     return {
         "precision": relevant_retrieved / k if k > 0 else 0.0,
         "recall": relevant_retrieved / len(relevant_ids),
         "hit": int(relevant_retrieved > 0),
         "relevant_retrieved": relevant_retrieved,
+        "mrr": reciprocal_rank,
+        "ndcg": dcg / ideal_dcg if ideal_dcg > 0 else 0.0,
     }
+
+
+def compute_paper_metrics_at_k(retrieved_doc_ids: list[str], relevant_doc_id: str, k: int) -> dict:
+    top_k_ids = retrieved_doc_ids[:k]
+    if not relevant_doc_id:
+        return {
+            "paper_hit": 0,
+            "paper_mrr": 0.0,
+        }
+
+    for rank, doc_id in enumerate(top_k_ids, start=1):
+        if doc_id == relevant_doc_id:
+            return {
+                "paper_hit": 1,
+                "paper_mrr": 1.0 / rank,
+            }
+
+    return {
+        "paper_hit": 0,
+        "paper_mrr": 0.0,
+    }
+
+
+def run_answer_evaluation(
+    query: str,
+    pipeline: dict,
+    dense_k: int,
+    sparse_k: int,
+    fusion_k: int,
+    final_k: int,
+    max_retries: int,
+) -> dict:
+    from corrective_Rag_pipeline import corrective_rag_pipeline_v2
+    from llm_generate import llm_generate_fn
+
+    result = corrective_rag_pipeline_v2(
+        query=query,
+        vectorstore=pipeline["vectorstore"],
+        bm25=pipeline["bm25"],
+        chunks=pipeline["chunks"],
+        reranker=pipeline["reranker"],
+        llm_generate_fn=llm_generate_fn,
+        dense_k=dense_k,
+        sparse_k=sparse_k,
+        fusion_k=fusion_k,
+        final_k=final_k,
+        max_retries=max_retries,
+    )
+
+    params = result.get("verification_params", {}) or {}
+    output = {
+        "generated_answer": result.get("answer", ""),
+        "justification": result.get("justification", ""),
+        "verified": result.get("verification", {}).get("verified", False),
+        "verification_reason": result.get("verification", {}).get("reason", ""),
+        "abstained": result.get("abstained", False),
+        "retries_used": result.get("retries_used", 0),
+    }
+
+    for field in VERIFICATION_FIELDS:
+        output[field] = round(float(params.get(field, 0.0) or 0.0), 4)
+
+    return output
 
 
 def evaluate_rows(
@@ -80,10 +184,13 @@ def evaluate_rows(
     fusion_k: int,
     final_k: int,
     answerable_only: bool,
+    include_answer_metrics: bool,
+    max_retries: int,
 ) -> list[dict]:
     evaluated_rows = []
 
     for row_id, row in enumerate(rows, start=1):
+        print(f"[{row_id}/{len(rows)}] Evaluating: {row.get('question', '')[:80]}")
         answerable = int(row.get("answerable", 0))
         relevant_ids = parse_chunk_ids(row.get("source_chunk_ids", ""))
 
@@ -92,7 +199,7 @@ def evaluate_rows(
         if answerable == 1 and not relevant_ids:
             continue
 
-        retrieved_ids = get_top_chunk_ids(
+        retrieved_metadata = get_top_retrieved_metadata(
             query=row["question"],
             pipeline=pipeline,
             dense_k=dense_k,
@@ -100,6 +207,8 @@ def evaluate_rows(
             fusion_k=fusion_k,
             final_k=final_k,
         )
+        retrieved_ids = [item["chunk_id"] for item in retrieved_metadata]
+        retrieved_doc_ids = [item["doc_id"] for item in retrieved_metadata]
 
         base_row = {
             "row_id": row_id,
@@ -107,16 +216,46 @@ def evaluate_rows(
             "question": row.get("question", ""),
             "category": row.get("category", ""),
             "answerable": answerable,
+            "ground_truth_answer": row.get("ground_truth_answer", ""),
             "ground_truth_chunk_ids": "|".join(sorted(relevant_ids)),
             "retrieved_chunk_ids": "|".join(retrieved_ids),
+            "retrieved_doc_ids": "|".join(retrieved_doc_ids),
         }
 
         for k in ks:
             metrics = compute_metrics_at_k(retrieved_ids, relevant_ids, k)
+            paper_metrics = compute_paper_metrics_at_k(retrieved_doc_ids, row.get("doc_id", ""), k)
             base_row[f"precision@{k}"] = round(metrics["precision"], 4)
             base_row[f"recall@{k}"] = round(metrics["recall"], 4)
             base_row[f"hit@{k}"] = metrics["hit"]
+            base_row[f"mrr@{k}"] = round(metrics["mrr"], 4)
+            base_row[f"ndcg@{k}"] = round(metrics["ndcg"], 4)
             base_row[f"relevant_retrieved@{k}"] = metrics["relevant_retrieved"]
+            base_row[f"paper_hit@{k}"] = paper_metrics["paper_hit"]
+            base_row[f"paper_mrr@{k}"] = round(paper_metrics["paper_mrr"], 4)
+
+        if include_answer_metrics:
+            try:
+                base_row.update(run_answer_evaluation(
+                    query=row["question"],
+                    pipeline=pipeline,
+                    dense_k=dense_k,
+                    sparse_k=sparse_k,
+                    fusion_k=fusion_k,
+                    final_k=final_k,
+                    max_retries=max_retries,
+                ))
+            except Exception as exc:
+                base_row.update({
+                    "generated_answer": "",
+                    "justification": "",
+                    "verified": False,
+                    "verification_reason": f"evaluation_error: {exc}",
+                    "abstained": False,
+                    "retries_used": 0,
+                })
+                for field in VERIFICATION_FIELDS:
+                    base_row[field] = 0.0
 
         evaluated_rows.append(base_row)
 
@@ -131,12 +270,24 @@ def summarize_results(rows: list[dict], ks: list[int]) -> dict:
             summary[f"precision@{k}"] = 0.0
             summary[f"recall@{k}"] = 0.0
             summary[f"hit_rate@{k}"] = 0.0
+            summary[f"mrr@{k}"] = 0.0
+            summary[f"ndcg@{k}"] = 0.0
+            summary[f"paper_hit_rate@{k}"] = 0.0
+            summary[f"paper_mrr@{k}"] = 0.0
         return summary
 
     for k in ks:
         summary[f"precision@{k}"] = round(mean(row[f"precision@{k}"] for row in rows), 4)
         summary[f"recall@{k}"] = round(mean(row[f"recall@{k}"] for row in rows), 4)
         summary[f"hit_rate@{k}"] = round(mean(row[f"hit@{k}"] for row in rows), 4)
+        summary[f"mrr@{k}"] = round(mean(row[f"mrr@{k}"] for row in rows), 4)
+        summary[f"ndcg@{k}"] = round(mean(row[f"ndcg@{k}"] for row in rows), 4)
+        summary[f"paper_hit_rate@{k}"] = round(mean(row[f"paper_hit@{k}"] for row in rows), 4)
+        summary[f"paper_mrr@{k}"] = round(mean(row[f"paper_mrr@{k}"] for row in rows), 4)
+
+    for field in VERIFICATION_FIELDS:
+        if field in rows[0]:
+            summary[field] = round(mean(float(row[field]) for row in rows), 4)
 
     return summary
 
@@ -161,16 +312,33 @@ def save_results(rows: list[dict], output_csv: Path, ks: list[int]) -> None:
         "question",
         "category",
         "answerable",
+        "ground_truth_answer",
         "ground_truth_chunk_ids",
         "retrieved_chunk_ids",
+        "retrieved_doc_ids",
     ]
     for k in ks:
         fieldnames.extend([
             f"precision@{k}",
             f"recall@{k}",
             f"hit@{k}",
+            f"mrr@{k}",
+            f"ndcg@{k}",
             f"relevant_retrieved@{k}",
+            f"paper_hit@{k}",
+            f"paper_mrr@{k}",
         ])
+    answer_fields = [
+        "generated_answer",
+        "justification",
+        "verified",
+        "verification_reason",
+        "abstained",
+        "retries_used",
+    ]
+    if rows and any(field in rows[0] for field in answer_fields + VERIFICATION_FIELDS):
+        fieldnames.extend(answer_fields)
+        fieldnames.extend(VERIFICATION_FIELDS)
 
     with output_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
@@ -205,11 +373,27 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sparse-k", type=int, default=20)
     parser.add_argument("--fusion-k", type=int, default=50)
     parser.add_argument("--final-k", type=int, default=5)
+    parser.add_argument("--chunk-size", type=int, default=800)
+    parser.add_argument("--chunk-overlap", type=int, default=150)
+    parser.add_argument(
+        "--embedding-model",
+        default="sentence-transformers/all-mpnet-base-v2",
+        help="Embedding model used for Chroma retrieval.",
+    )
+    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--force-rebuild-chunks", action="store_true")
+    parser.add_argument("--force-rebuild-vectordb", action="store_true")
     parser.add_argument(
         "--include-unanswerable",
         action="store_true",
         help="Include unanswerable questions in the output CSV. They are excluded from aggregate metrics.",
     )
+    parser.add_argument(
+        "--include-answer-metrics",
+        action="store_true",
+        help="Run full answer generation and export verification parameters for each question.",
+    )
+    parser.add_argument("--max-retries", type=int, default=2)
     return parser.parse_args()
 
 
@@ -230,13 +414,13 @@ def main() -> None:
     print("Preparing retrieval pipeline...")
     pipeline = prepare_pipeline(
         force_rebuild_documents=False,
-        force_rebuild_chunks=False,
-        force_rebuild_vectordb=False,
+        force_rebuild_chunks=args.force_rebuild_chunks,
+        force_rebuild_vectordb=args.force_rebuild_vectordb,
         use_api_enrichment=True,
-        chunk_size=800,
-        chunk_overlap=150,
-        embedding_model="sentence-transformers/all-mpnet-base-v2",
-        device="cpu",
+        chunk_size=args.chunk_size,
+        chunk_overlap=args.chunk_overlap,
+        embedding_model=args.embedding_model,
+        device=args.device,
     )
 
     print(f"Loading questions from: {args.questions_csv}")
@@ -252,6 +436,8 @@ def main() -> None:
         fusion_k=args.fusion_k,
         final_k=args.final_k,
         answerable_only=not args.include_unanswerable,
+        include_answer_metrics=args.include_answer_metrics,
+        max_retries=args.max_retries,
     )
 
     metric_rows = [row for row in evaluated_rows if int(row["answerable"]) == 1]
@@ -268,8 +454,17 @@ def main() -> None:
         print(
             f"Precision@{k}: {overall_summary[f'precision@{k}']:.4f} | "
             f"Recall@{k}: {overall_summary[f'recall@{k}']:.4f} | "
-            f"HitRate@{k}: {overall_summary[f'hit_rate@{k}']:.4f}"
+            f"HitRate@{k}: {overall_summary[f'hit_rate@{k}']:.4f} | "
+            f"MRR@{k}: {overall_summary[f'mrr@{k}']:.4f} | "
+            f"nDCG@{k}: {overall_summary[f'ndcg@{k}']:.4f} | "
+            f"PaperHit@{k}: {overall_summary[f'paper_hit_rate@{k}']:.4f}"
         )
+
+    if args.include_answer_metrics:
+        print("\nMean verification parameters")
+        print("-" * 40)
+        for field in VERIFICATION_FIELDS:
+            print(f"{field}: {overall_summary.get(field, 0.0):.4f}")
 
     if category_summary:
         print("\nBy category")
@@ -280,7 +475,10 @@ def main() -> None:
                 print(
                     f"  Precision@{k}: {summary[f'precision@{k}']:.4f} | "
                     f"Recall@{k}: {summary[f'recall@{k}']:.4f} | "
-                    f"HitRate@{k}: {summary[f'hit_rate@{k}']:.4f}"
+                    f"HitRate@{k}: {summary[f'hit_rate@{k}']:.4f} | "
+                    f"MRR@{k}: {summary[f'mrr@{k}']:.4f} | "
+                    f"nDCG@{k}: {summary[f'ndcg@{k}']:.4f} | "
+                    f"PaperHit@{k}: {summary[f'paper_hit_rate@{k}']:.4f}"
                 )
 
 

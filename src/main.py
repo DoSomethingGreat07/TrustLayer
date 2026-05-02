@@ -132,8 +132,8 @@ def prepare_pipeline(
     force_rebuild_chunks: bool = False,
     force_rebuild_vectordb: bool = False,
     use_api_enrichment: bool = False,
-    chunk_size: int = 800,
-    chunk_overlap: int = 150,
+    chunk_size: int = 1200,
+    chunk_overlap: int = 250,
     embedding_model: str = "sentence-transformers/all-mpnet-base-v2",
     device: str = "cpu",
 ):
@@ -211,10 +211,10 @@ if __name__ == "__main__":
         force_rebuild_chunks=False,
         force_rebuild_vectordb=False,
         use_api_enrichment=True,   # set True if you want API-enriched paper title/authors
-        chunk_size=800,
-        chunk_overlap=150,
+        chunk_size=1200,
+        chunk_overlap=250,
         embedding_model="sentence-transformers/all-mpnet-base-v2",
-        device="mps",              # use "mps" on Apple Silicon if stable
+        device="cpu",
     )
 
     query = "What is corrective RAG?"

@@ -1094,10 +1094,10 @@ def load_pipeline():
         force_rebuild_chunks=False,
         force_rebuild_vectordb=False,
         use_api_enrichment=True,
-        chunk_size=800,
-        chunk_overlap=150,
+        chunk_size=1200,
+        chunk_overlap=250,
         embedding_model="sentence-transformers/all-mpnet-base-v2",
-        device="mps",   # change to "mps" if stable on your setup
+        device="cpu",
     )
 
 

@@ -13,6 +13,7 @@ ARTIFACTS_DIR.mkdir(exist_ok=True)
 
 CHROMA_DIR = ARTIFACTS_DIR / "chroma_papers"
 VECTORDB_CONFIG_PATH = ARTIFACTS_DIR / "vectordb_config.json"
+CHROMA_COLLECTION_METADATA = {"hnsw:space": "cosine"}
 
 
 def save_json(obj: Dict[str, Any], path: Path) -> None:
@@ -33,6 +34,7 @@ def vectordb_config_matches(model_name: str, device: str) -> bool:
     new_config = {
         "embedding_model": model_name,
         "device": device,
+        "collection_metadata": CHROMA_COLLECTION_METADATA,
     }
     return old_config == new_config
 
@@ -71,12 +73,14 @@ def get_or_build_vectorstore(
             documents=chunks,
             embedding=embeddings,
             persist_directory=str(CHROMA_DIR),
+            collection_metadata=CHROMA_COLLECTION_METADATA,
         )
 
         save_json(
             {
                 "embedding_model": embedding_model,
                 "device": device,
+                "collection_metadata": CHROMA_COLLECTION_METADATA,
             },
             VECTORDB_CONFIG_PATH,
         )
@@ -88,6 +92,7 @@ def get_or_build_vectorstore(
         vectorstore = Chroma(
             persist_directory=str(CHROMA_DIR),
             embedding_function=embeddings,
+            collection_metadata=CHROMA_COLLECTION_METADATA,
         )
 
     return vectorstore, embeddings
