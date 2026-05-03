@@ -541,8 +541,27 @@ Regenerate report artifacts:
 
 ```bash
 source trustlayer_env/bin/activate
-python src/generate_report_artifacts.py
+trustlayer_env/bin/python src/generate_report_artifacts.py
 ```
+
+## Software Submission Package
+
+Suggested zip for course software submission:
+
+```bash
+zip -r TrustLayer_software.zip \
+   src frontend assets .streamlit .github \
+   README.md GITHUB_DEPLOYMENT.md requirements.txt .env.example \
+   -x "trustlayer_env/*" \
+       ".venv/*" \
+       "frontend/node_modules/*" \
+       "frontend/dist/*" \
+       "data/*" \
+       "artifacts/*" \
+       "*.log"
+```
+
+This keeps the package reproducible while excluding local environments, raw corpus files, and large generated artifacts.
 
 ## Troubleshooting
 
@@ -580,6 +599,12 @@ Runtime metadata comes from PDF heuristics, optional Semantic Scholar enrichment
 ## GitHub Notes
 
 See [GITHUB_DEPLOYMENT.md](GITHUB_DEPLOYMENT.md) for a publishing checklist.
+
+Current repository URL:
+
+```text
+https://github.com/DoSomethingGreat07/TrustLayer
+```
 
 Do not commit:
 
