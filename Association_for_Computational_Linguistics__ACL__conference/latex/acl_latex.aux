@@ -1,0 +1,77 @@
+\relax 
+\bibstyle{acl_natbib}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\citation{lewis2020rag}
+\citation{robertson2009bm25}
+\citation{karpukhin2020dpr}
+\citation{reimers2019sbert}
+\citation{cormack2009rrf}
+\citation{nogueira2019passage}
+\citation{ji2023survey}
+\citation{thorne2018fever}
+\citation{guo2017calibration}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Retrieval-Augmented Generation.}{2}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hybrid Retrieval.}{2}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reranking.}{2}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hallucination Detection and Verification.}{2}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Confidence Calibration.}{2}{section*.5}\protected@file@percent }
+\citation{malkov2020hnsw}
+\@writefile{toc}{\contentsline {paragraph}{Abstention in Question Answering.}{3}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Problem Statement}{3}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Methodology}{3}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Document Ingestion and Text Parsing}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Chunk Generation}{3}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Embedding Generation and Vector Storage}{3}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces TrustLayer system pipeline architecture with offline and online components.}}{4}{figure.caption.7}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:pipeline}{{1}{4}{TrustLayer system pipeline architecture with offline and online components}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Hybrid Retrieval}{4}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Reranking}{4}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Grounded LLM Generation}{4}{subsection.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Verification and Calibration}{5}{subsection.4.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Abstention Mechanism}{5}{subsection.4.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Verification gate signals used by TrustLayer. Thresholds are manually configured from the implemented pipeline.}}{5}{table.caption.8}\protected@file@percent }
+\newlabel{tab:thresholds}{{1}{5}{Verification gate signals used by TrustLayer. Thresholds are manually configured from the implemented pipeline}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.9}User Interfaces and Evidence Display}{5}{subsection.4.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experiments}{5}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Corpus and Evaluation Set}{5}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}System Configuration}{5}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Question distribution in the final cleaned evaluation set.}}{6}{table.caption.9}\protected@file@percent }
+\newlabel{tab:question-dist}{{2}{6}{Question distribution in the final cleaned evaluation set}{table.caption.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Final TrustLayer experimental configuration.}}{6}{table.caption.10}\protected@file@percent }
+\newlabel{tab:config}{{3}{6}{Final TrustLayer experimental configuration}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Evaluation Metrics}{6}{subsection.5.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Final strict chunk-level retrieval performance using BGE-base embeddings. PaperHit@K is reported separately in the text: 0.3485, 0.4015, 0.4091, and 0.4318 for K=1, 3, 5, and 10.}}{6}{table.caption.11}\protected@file@percent }
+\newlabel{tab:retrieval}{{4}{6}{Final strict chunk-level retrieval performance using BGE-base embeddings. PaperHit@K is reported separately in the text: 0.3485, 0.4015, 0.4091, and 0.4318 for K=1, 3, 5, and 10}{table.caption.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Mean verification and calibration signals for the final BGE-base TrustLayer configuration.}}{6}{table.caption.12}\protected@file@percent }
+\newlabel{tab:verification}{{5}{6}{Mean verification and calibration signals for the final BGE-base TrustLayer configuration}{table.caption.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Results}{6}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Retrieval Performance}{6}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Verification Metrics}{6}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Embedding Ablation}{6}{subsection.6.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Embedding ablation on the final cleaned evaluation set.}}{7}{table.caption.13}\protected@file@percent }
+\newlabel{tab:ablation}{{6}{7}{Embedding ablation on the final cleaned evaluation set}{table.caption.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Category-wise retrieval performance at K=10 for the final BGE-base configuration.}}{7}{table.caption.14}\protected@file@percent }
+\newlabel{tab:category}{{7}{7}{Category-wise retrieval performance at K=10 for the final BGE-base configuration}{table.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Category-Level Observations}{7}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Discussion}{7}{subsection.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Limitations}{7}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Future Work}{7}{section.8}\protected@file@percent }
+\bibdata{custom}
+\bibcite{cormack2009rrf}{{1}{2009}{{Cormack et~al.}}{{Cormack, Clarke, and B{"u}ttcher}}}
+\bibcite{guo2017calibration}{{2}{2017}{{Guo et~al.}}{{Guo, Pleiss, Sun, and Weinberger}}}
+\bibcite{ji2023survey}{{3}{2023}{{Ji et~al.}}{{Ji, Lee, Frieske, Yu, Su, Xu, Ishii, Bang, Madotto, and Fung}}}
+\bibcite{karpukhin2020dpr}{{4}{2020}{{Karpukhin et~al.}}{{Karpukhin, Oguz, Min, Lewis, Wu, Edunov, Chen, and Yih}}}
+\bibcite{lewis2020rag}{{5}{2020}{{Lewis et~al.}}{{Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal, K{"u}ttler, Lewis, Yih, Rockt{"a}schel, Riedel, and Kiela}}}
+\bibcite{malkov2020hnsw}{{6}{2020}{{Malkov and Yashunin}}{{}}}
+\bibcite{nogueira2019passage}{{7}{2019}{{Nogueira and Cho}}{{}}}
+\bibcite{reimers2019sbert}{{8}{2019}{{Reimers and Gurevych}}{{}}}
+\bibcite{robertson2009bm25}{{9}{2009}{{Robertson and Zaragoza}}{{}}}
+\bibcite{thorne2018fever}{{10}{2018}{{Thorne et~al.}}{{Thorne, Vlachos, Christodoulopoulos, and Mittal}}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Team Work Division and Overall Experience}{8}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Conclusion}{8}{section.10}\protected@file@percent }
+\gdef \@abspage@last{9}

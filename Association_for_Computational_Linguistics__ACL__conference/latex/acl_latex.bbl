@@ -1,0 +1,77 @@
+\begin{thebibliography}{10}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Cormack et~al.(2009)Cormack, Clarke, and
+  B{"u}ttcher}]{cormack2009rrf}
+Gordon~V. Cormack, Charles L.~A. Clarke, and Stefan B{"u}ttcher. 2009.
+\newblock Reciprocal rank fusion outperforms condorcet and individual rank
+  learning methods.
+\newblock In \emph{Proceedings of the 32nd International ACM SIGIR Conference
+  on Research and Development in Information Retrieval}, pages 758--759.
+
+\bibitem[{Guo et~al.(2017)Guo, Pleiss, Sun, and
+  Weinberger}]{guo2017calibration}
+Chuan Guo, Geoff Pleiss, Yu~Sun, and Kilian~Q. Weinberger. 2017.
+\newblock On calibration of modern neural networks.
+\newblock In \emph{Proceedings of the 34th International Conference on Machine
+  Learning}, volume~70, pages 1321--1330.
+
+\bibitem[{Ji et~al.(2023)Ji, Lee, Frieske, Yu, Su, Xu, Ishii, Bang, Madotto,
+  and Fung}]{ji2023survey}
+Ziwei Ji, Nayeon Lee, Rita Frieske, Tiezheng Yu, Dan Su, Yan Xu, Etsuko Ishii,
+  Ye~Jin Bang, Andrea Madotto, and Pascale Fung. 2023.
+\newblock Survey of hallucination in natural language generation.
+\newblock \emph{ACM Computing Surveys}, 55(12):1--38.
+
+\bibitem[{Karpukhin et~al.(2020)Karpukhin, Oguz, Min, Lewis, Wu, Edunov, Chen,
+  and Yih}]{karpukhin2020dpr}
+Vladimir Karpukhin, Barlas Oguz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey
+  Edunov, Danqi Chen, and Wen-tau Yih. 2020.
+\newblock Dense passage retrieval for open-domain question answering.
+\newblock In \emph{Proceedings of the 2020 Conference on Empirical Methods in
+  Natural Language Processing}, pages 6769--6781.
+
+\bibitem[{Lewis et~al.(2020)Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal,
+  K{"u}ttler, Lewis, Yih, Rockt{"a}schel, Riedel, and Kiela}]{lewis2020rag}
+Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir
+  Karpukhin, Naman Goyal, Heinrich K{"u}ttler, Mike Lewis, Wen-tau Yih, Tim
+  Rockt{"a}schel, Sebastian Riedel, and Douwe Kiela. 2020.
+\newblock Retrieval-augmented generation for knowledge-intensive nlp tasks.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~33, pages 9459--9474.
+
+\bibitem[{Malkov and Yashunin(2020)}]{malkov2020hnsw}
+Yu.~A. Malkov and Dmitry~A. Yashunin. 2020.
+\newblock Efficient and robust approximate nearest neighbor search using
+  hierarchical navigable small world graphs.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, 42(4):824--836.
+
+\bibitem[{Nogueira and Cho(2019)}]{nogueira2019passage}
+Rodrigo Nogueira and Kyunghyun Cho. 2019.
+\newblock Passage re-ranking with bert.
+\newblock \emph{arXiv preprint arXiv:1901.04085}.
+
+\bibitem[{Reimers and Gurevych(2019)}]{reimers2019sbert}
+Nils Reimers and Iryna Gurevych. 2019.
+\newblock Sentence-bert: Sentence embeddings using siamese bert-networks.
+\newblock In \emph{Proceedings of the 2019 Conference on Empirical Methods in
+  Natural Language Processing and the 9th International Joint Conference on
+  Natural Language Processing}, pages 3982--3992.
+
+\bibitem[{Robertson and Zaragoza(2009)}]{robertson2009bm25}
+Stephen Robertson and Hugo Zaragoza. 2009.
+\newblock The probabilistic relevance framework: Bm25 and beyond.
+\newblock \emph{Foundations and Trends in Information Retrieval},
+  3(4):333--389.
+
+\bibitem[{Thorne et~al.(2018)Thorne, Vlachos, Christodoulopoulos, and
+  Mittal}]{thorne2018fever}
+James Thorne, Andreas Vlachos, Christos Christodoulopoulos, and Arpit Mittal.
+  2018.
+\newblock {FEVER}: a large-scale dataset for fact extraction and verification.
+\newblock In \emph{Proceedings of the 2018 Conference of the North American
+  Chapter of the Association for Computational Linguistics: Human Language
+  Technologies}, pages 809--819.
+
+\end{thebibliography}
