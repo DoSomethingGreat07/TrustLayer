@@ -30,6 +30,9 @@ trustlayer_env/
 # Build / local artifacts
 artifacts/
 *.log
+*.zip
+TrustLayer_software/
+TrustLayer_software_submission/
 
 # IDE / local-only folders
 .rocketride/

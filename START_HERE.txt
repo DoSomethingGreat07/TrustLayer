@@ -1,0 +1,14 @@
+TrustLayer Repository Guide
+===========================
+
+Start with PROFESSOR_README.md for the shortest, most accurate setup and evaluation notes.
+
+Then read README.md for the full project overview, commands, and implementation details.
+
+For a beginner-oriented walkthrough, see instructions/Final.pdf if it is included in the submitted zip.
+
+Important notes:
+- Do not commit or share a real .env file or API keys.
+- The data/ folder is intentionally excluded because research PDFs may be large or copyrighted.
+- The artifacts/ folder is ignored in GitHub, but selected evaluation CSVs may be included in the professor submission zip.
+- To fully rebuild the knowledge base, place PDFs under data/ and run the pipeline commands in README.md or PROFESSOR_README.md.

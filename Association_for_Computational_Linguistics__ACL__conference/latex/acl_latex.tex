@@ -50,7 +50,7 @@
   Department of Computer Science \\
   University of Illinois at Chicago \\
   Chicago, IL, USA \\
-  \texttt{\{njulu, hamsini\_placeholder, ganesh\_placeholder\}@uic.edu}
+  \texttt{\{njulu, hpulu, gkatt\}@uic.edu}
 }
 
 \begin{document}
@@ -160,7 +160,7 @@ The implementation uses structured tool output from the OpenAI API so that gener
 
 \subsection{Verification and Calibration}
 
-TrustLayer verifies generated answers using multiple signals. Evidence similarity is computed between the generated answer and retrieved chunks using normalized sentence embeddings. Evidence coverage measures lexical overlap between answer words and retrieved context words. NLI verification uses \texttt{MoritzLaurer/deberta-v3-base-mnli-fever-anli} to estimate entailment and contradiction between evidence and answer.
+TrustLayer verifies generated answers using multiple signals. Evidence similarity is computed between the generated answer and retrieved chunks using normalized sentence embeddings. Evidence coverage measures lexical overlap between answer words and retrieved context words. NLI verification uses \path{MoritzLaurer/deberta-v3-base-mnli-fever-anli} to estimate entailment and contradiction between evidence and answer.
 
 The system computes a grounding score from maximum and top-three entailment values. It also computes a combined confidence score:
 
@@ -324,6 +324,7 @@ Table~\ref{tab:ablation} compares MPNet and BGE-base under the same final chunki
 \centering
 \tablefont
 \setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{p{0.28\columnwidth}rrrr}
 \hline
 \textbf{Setup} & \textbf{Hit@10} & \textbf{Rec.@10} & \textbf{MRR@10} & \textbf{PaperHit@10} \\
@@ -332,6 +333,7 @@ MPNet + 1200/250 & 0.2879 & 0.2765 & 0.1839 & 0.3939 \\
 BGE-base + 1200/250 & 0.3030 & 0.2955 & 0.1874 & 0.4318 \\
 \hline
 \end{tabular}
+}
 \caption{Embedding ablation on the final cleaned evaluation set.}
 \label{tab:ablation}
 \end{table}
@@ -344,6 +346,7 @@ Factual questions achieved the strongest category-level strict retrieval result,
 \centering
 \tablefont
 \setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrrr}
 \hline
 \textbf{Category} & \textbf{Hit@10} & \textbf{Rec.@10} & \textbf{PaperHit@10} \\
@@ -356,6 +359,7 @@ methodology & 0.3182 & 0.3182 & 0.4091 \\
 multihop & 0.2105 & 0.1842 & 0.3158 \\
 \hline
 \end{tabular}
+}
 \caption{Category-wise retrieval performance at K=10 for the final BGE-base configuration.}
 \label{tab:category}
 \end{table}
@@ -398,5 +402,4 @@ Another direction is learned calibration. TrustLayer currently uses manually sel
 TrustLayer is a verification-aware RAG framework for local research-paper question answering. It combines metadata-aware PDF ingestion, chunking, dense and sparse retrieval, reciprocal rank fusion, reranking, grounded generation, multi-signal verification, confidence calibration, and abstention. The final BGE-base configuration achieved the strongest retrieval performance in the local evaluation and produced interpretable verification metrics. Overall, the system shows how RAG pipelines can be made more reliable by combining evidence retrieval with explicit post-generation verification and abstention.
 
 \bibliography{custom}
-
 \end{document}
